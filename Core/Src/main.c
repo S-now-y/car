@@ -23,6 +23,9 @@
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+#include"motor.h"
+#include"encoder.h"
+#include"pid.h"
 
 /* USER CODE END Includes */
 
@@ -38,6 +41,26 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
+	short encoderPulse[4] ={0};
+/**
+  * 定义PID的结构体，结构体内存储PID参数、误差、限幅值以及输出值
+  */
+    typedef struct
+    {
+    float Kp;
+    float Ki;
+    float Kd;
+
+    float last_error;  //上一次偏差
+    float prev_error;  //上上次偏差
+
+    int limit;  //限制输出幅值
+    int pwm_add; //输出的PWM值
+    }PID;
+/**
+  * @brief  PID相关参数的初始化
+  * @param  PID的结构体指针
+  */
 
 /* USER CODE END PM */
 
@@ -163,6 +186,19 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
+//在此处添加了定时器六更新中断回调函数
+void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
+{
+  float c_left_front_Speed,c_right_front_Speed,c_left_behind_Speed,c_right_behind_Speed;
+  if(htim==(&htim6))
+  {
+    GetEncoderPulse();
+    c_left_front_Speed = CalActualSpeed(encoderPulse[0]);
+    c_right_front_Speed = CalActualSpeed(encoderPulse[1]);
+    c_left_behind_Speed = CalActualSpeed(encoderPulse[2]);
+    c_right_behind_Speed = CalActualSpeed(encoderPulse[3]);
+  }
+}
 
 /* USER CODE END 4 */
 
