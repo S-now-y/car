@@ -50,12 +50,12 @@
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void motor_Init(void)
-{
-	__HAL_TIM_SET_COUNTER(&htim1,0);
-	__HAL_TIM_ENABLE(&htim1);
-	__HAL_MOE_ENABLE(&htim1);
-}
+// void motor_Init(void)
+// {
+// 	__HAL_TIM_SET_COUNTER(&htim1,0);
+// 	__HAL_TIM_ENABLE(&htim1);
+// 	__HAL_MOE_ENABLE(&htim1);
+// }
 
 /* USER CODE END PFP */
 

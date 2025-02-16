@@ -1,6 +1,6 @@
-/Debug
-/Drivers
-/.settings
+/Debug/
+/Drivers/
+/.settings/
 
 # 编译输出
 *.class
