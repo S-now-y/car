@@ -8,9 +8,12 @@
 #include "encoder.h"
 #include "tim.h"
 
+// 使用 extern 声明全局变量
+extern short encoderPulse[4];
+
 void GetEncoderPulse(void)
 {
-	 encoderPulse[0] = -((short)__HAL_TIM_GET_COUNTER(&htim2));
+	  encoderPulse[0] = -((short)__HAL_TIM_GET_COUNTER(&htim2));
 	  encoderPulse[1] = -((short)__HAL_TIM_GET_COUNTER(&htim3));
 	  encoderPulse[2] = ((short)__HAL_TIM_GET_COUNTER(&htim4));
 	  encoderPulse[3] = ((short)__HAL_TIM_GET_COUNTER(&htim5));

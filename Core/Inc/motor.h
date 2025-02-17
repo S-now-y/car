@@ -8,7 +8,7 @@
 #ifndef INC_MOTOR_H_
 #define INC_MOTOR_H_
 
-#include "stm32f4xx_hal_conf.h"//基于HAL库!!!!!!!!!!!!conf我暂时不知道删不删，删了有warning！
+#include "stm32f4xx_hal.h"//基于HAL库!!!!!!!!!!!!conf我暂时不知道删不删，删了有warning！
 
 //宏定义（暂时未完善）之后添加
 #define MAX_SPEED 100

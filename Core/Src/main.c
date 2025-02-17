@@ -19,14 +19,18 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "tim.h"
+#include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include"motor.h"
-#include"encoder.h"
-#include"pid.h"
-
+#include "motor.h"
+#include "encoder.h"
+#include "pid.h"
+#include "decoder.h"
+#include <string.h>
+#include <stdio.h>
+#include <stdbool.h>
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -41,45 +45,34 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-	short encoderPulse[4] ={0};
-/**
-  * 定义PID的结构体，结构体内存储PID参数、误差、限幅值以及输出值
-  */
-    typedef struct
-    {
-    float Kp;
-    float Ki;
-    float Kd;
-
-    float last_error;  //上一次偏差
-    float prev_error;  //上上次偏差
-
-    int limit;  //限制输出幅值
-    int pwm_add; //输出的PWM值
-    }PID;
-/**
-  * @brief  PID相关参数的初始化
-  * @param  PID的结构体指针
-  */
-
+	short encoderPulse[4] = {0};
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
-
+	uint8_t CMD[8] = {'0','0','0','0','0','0','0','0',};
+	volatile short Vx, Vy, omega;
+	volatile bool Speedupdateflag = 0;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
-void motor_Init(void)
+//毫秒延时 //要延时的毫秒数不要超过1500ms
+void Delay_ms(uint16_t nms)
 {
-	__HAL_TIM_SET_COUNTER(&htim1,0);
-	__HAL_TIM_ENABLE(&htim1);
-	__HAL_MOE_ENABLE(&htim1);
+ uint32_t temp;
+ SysTick->LOAD = 9000*nms;
+ SysTick->VAL=0X00;//清空计数�?????????????????????????????????????
+ SysTick->CTRL=0X01;//使能，减到零是无动作，采用外部时钟源
+ do
+ {
+  temp=SysTick->CTRL;//读取当前倒计数�??
+ }while((temp&0x01)&&(!(temp&(1<<16))));//等待时间到达
+    SysTick->CTRL=0x00; //关闭计数�?????????????????????????????????????
+    SysTick->VAL =0X00; //清空计数�?????????????????????????????????????
 }
-
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
@@ -123,16 +116,34 @@ int main(void)
   MX_TIM3_Init();
   MX_TIM5_Init();
   MX_TIM6_Init();
+  MX_USART1_UART_Init();
+  MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
-  motor_Init();
-
+  Motor_Init();
+  HAL_UART_Receive_IT(&huart1, CMD, 8);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 // 调用函数计算每个轮子速度
+	 if(Speedupdateflag == 1){
+		 //-------------目前使用short值的输入数据，需统一-------------------
+	     WheelSpeeds speeds = calculateMecanumWheelSpeeds((float)Vx, (float)Vy, (float)omega);
+/* ------------------调试用------------------*/
+	     char info[100]="Pace:";
+	        // 利用 sprintf 将结果附加到 info 数组后面
+	        sprintf(info + strlen(info), " FL: %.2f", speeds.wheel_FL);
+	        sprintf(info + strlen(info), " FR: %.2f", speeds.wheel_FR);
+	        sprintf(info + strlen(info), " RL: %.2f", speeds.wheel_RL);
+	        sprintf(info + strlen(info), " RR: %.2f\n", speeds.wheel_RR);
 
+	     HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
+	     //操作电机
+	     //待补全
+	     Speedupdateflag = 0;
+	 }
     /* USER CODE END WHILE */
 
     /* USER CODE BEGIN 3 */
@@ -186,17 +197,33 @@ void SystemClock_Config(void)
 }
 
 /* USER CODE BEGIN 4 */
-//在此处添加了定时器六更新中断回调函数
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
+	//可能需要检查是哪一个huart
+	if (CMD[0] == 'c' && CMD[7] == '\n') {
+	    // 将字符转换为对应的数字值，并计算出最终的 Vx, Vy, omega
+	    Vx = (short)((CMD[1] - '0') * 10 + (CMD[2] - '0'));
+	    Vy = (short)((CMD[3] - '0') * 10 + (CMD[4] - '0'));
+	    omega = (short)((CMD[5] - '0') * 10 + (CMD[6] - '0'));
+
+		Speedupdateflag = 1;
+	}
+	else if(CMD[0]=='f'&&CMD[1]=='f'&&CMD[2]=='f'){
+			   __set_FAULTMASK(1);//禁止所有的可屏蔽中断
+			   NVIC_SystemReset();//软件复位
+	}
+	HAL_UART_Receive_IT(&huart1, CMD, 8);
+}
+//此处添加了定时器六更新中断回调函数
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   float c_left_front_Speed,c_right_front_Speed,c_left_behind_Speed,c_right_behind_Speed;
   if(htim==(&htim6))
   {
     GetEncoderPulse();
-    c_left_front_Speed = CalActualSpeed(encoderPulse[0]);
-    c_right_front_Speed = CalActualSpeed(encoderPulse[1]);
-    c_left_behind_Speed = CalActualSpeed(encoderPulse[2]);
-    c_right_behind_Speed = CalActualSpeed(encoderPulse[3]);
+    c_left_front_Speed = CalculatePulse(encoderPulse[0]);
+    c_right_front_Speed = CalculatePulse(encoderPulse[1]);
+    c_left_behind_Speed = CalculatePulse(encoderPulse[2]);
+    c_right_behind_Speed = CalculatePulse(encoderPulse[3]);
   }
 }
 

@@ -10,12 +10,12 @@
 
 void PID_Init(PID *p)
 {
-    p->Kp = Velocity_Kp;
-    p->Ki = Velocity_Ki;
-    p->Kd = Velocity_Kd;
+    p->Kp = VELOCITY_KP;
+    p->Ki = VELOCITY_KI;
+    p->Kd = VELOCITY_KD;
     p->last_error = 0;
     p->prev_error = 0;
-    p->limit = limit_value;
+    p->limit = LIMIT_VALUE;
     p->pwm_add = 0;
 }
 /**
