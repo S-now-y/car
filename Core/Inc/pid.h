@@ -11,7 +11,7 @@
 #define VELOCITY_KP 1.0f
 #define VELOCITY_KI 0.5f
 #define VELOCITY_KD 0.1f
-#define LIMIT_VALUE 1000
+#define LIMIT_VALUE 100
 
 #include "encoder.h"
 // 定义 PID 结构体

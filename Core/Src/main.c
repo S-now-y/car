@@ -274,11 +274,11 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
     /*-----------------仅调试----------------*/
 
-    PID_Cal(speeds.wheel_FL,c_left_front_Speed,&pid.wheel_FL);
-    PID_Cal(speeds.wheel_FR, c_right_front_Speed,&pid.wheel_FR);
-    PID_Cal(speeds.wheel_RL,c_left_behind_Speed,&pid.wheel_RL);
-    PID_Cal(speeds.wheel_RR,c_right_behind_Speed,&pid.wheel_RR);
-    MotorRun(pid.wheel_FL.pwm_add,pid.wheel_FR.pwm_add,pid.wheel_RL.pwm_add,pid.wheel_RR.pwm_add);
+    PID_Cal((int)speeds.wheel_FL,c_left_front_Speed,&pid.wheel_FL);
+    PID_Cal((int)speeds.wheel_FR, c_right_front_Speed,&pid.wheel_FR);
+    PID_Cal((int)speeds.wheel_RL,c_left_behind_Speed,&pid.wheel_RL);
+    PID_Cal((int)speeds.wheel_RR,c_right_behind_Speed,&pid.wheel_RR);
+    //MotorRun(pid.wheel_FL.pwm_add,pid.wheel_FR.pwm_add,pid.wheel_RL.pwm_add,pid.wheel_RR.pwm_add);
   }
 }
 

@@ -4,6 +4,14 @@
  *  Created on: Feb 17, 2025
  *      Author: 22684
  */
+/*
+ 注意，在幻尔ROS Controller上，对应关系：
+ *插槽-Motor函数
+ *M1-Motor3,
+ *M2-Motor1,
+ *M3-Motor4,
+ *M4-Motor3
+ */
 #include "motor.h"
 #include "tim.h"
 //初始化
@@ -50,8 +58,12 @@ void Motor1_Forward(uint8_t speed)
 }
 void Motor2_Forward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,speed);
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,0);
+//	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,speed);
+//	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,0);
+
+	//幻尔板子需要翻转 F&R
+		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,speed);
+		__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,0);
 }
 void Motor3_Forward(uint8_t speed)
 {
@@ -71,8 +83,12 @@ void Motor1_Backward(uint8_t speed)
 }
 void Motor2_Backward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,speed);
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,0);
+//	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,speed);
+//	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,0);
+
+	//幻尔板子需要翻转 F&R
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,speed);
+	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,0);
 }
 void Motor3_Backward(uint8_t speed)
 {
