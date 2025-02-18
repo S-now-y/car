@@ -27,5 +27,5 @@ void GetEncoderPulse(void)
 //速度计算，里面的值该速度为每个麦克纳姆轮的转速，并非小车实际的运行速度，车轮周长*规定时间内得到的脉冲数/(电机转动一圈的脉冲数*定时器规定时间 )
 float CalculatePulse(int pulse)
 {
-	return (float)(0.00 * pulse);
+	return (float)(1.00 * pulse);
 }

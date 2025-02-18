@@ -54,6 +54,8 @@
 	uint8_t CMD[8] = {'0','0','0','0','0','0','0','0',};
 	volatile short Vx, Vy, omega;
 	volatile bool Speedupdateflag = 0;
+	PID_x4 pid;
+	WheelSpeeds speeds;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
@@ -72,6 +74,44 @@ void Delay_ms(uint16_t nms)
  }while((temp&0x01)&&(!(temp&(1<<16))));//等待时间到达
     SysTick->CTRL=0x00; //关闭计数�?????????????????????????????????????
     SysTick->VAL =0X00; //清空计数�?????????????????????????????????????
+}
+void MotorRun(int left_front_MotorPWM, int right_front_MotorPWM,int left_behind_MotorPWM, int right_behind_MotorPWM)
+{
+    // 左前轮 (FL)
+    if (left_front_MotorPWM == 0) {
+        Motor1_Brake();
+    } else if (left_front_MotorPWM > 0) {
+        Motor1_Forward((uint8_t)left_front_MotorPWM);
+    } else {
+        Motor1_Backward((uint8_t)(-left_front_MotorPWM));
+    }
+
+    // 右前轮 (FR)
+    if (right_front_MotorPWM == 0) {
+        Motor2_Brake();
+    } else if (right_front_MotorPWM > 0) {
+        Motor2_Forward((uint8_t)right_front_MotorPWM);
+    } else {
+        Motor2_Backward((uint8_t)(-right_front_MotorPWM));
+    }
+
+    // 左后轮 (RL)
+    if (left_behind_MotorPWM == 0) {
+        Motor3_Brake();
+    } else if (left_behind_MotorPWM > 0) {
+        Motor3_Forward((uint8_t)left_behind_MotorPWM);
+    } else {
+        Motor3_Backward((uint8_t)(-left_behind_MotorPWM));
+    }
+
+    // 右后轮 (RR)
+    if (right_behind_MotorPWM == 0) {
+        Motor4_Brake();
+    } else if (right_behind_MotorPWM > 0) {
+        Motor4_Forward((uint8_t)right_behind_MotorPWM);
+    } else {
+        Motor4_Backward((uint8_t)(-right_behind_MotorPWM));
+    }
 }
 /* USER CODE END PFP */
 
@@ -120,6 +160,7 @@ int main(void)
   MX_USART3_UART_Init();
   /* USER CODE BEGIN 2 */
   Motor_Init();
+  PID_Init(&pid);
   HAL_UART_Receive_IT(&huart1, CMD, 8);
   /* USER CODE END 2 */
 
@@ -130,18 +171,16 @@ int main(void)
 	 // 调用函数计算每个轮子速度
 	 if(Speedupdateflag == 1){
 		 //-------------目前使用short值的输入数据，需统一-------------------
-	     WheelSpeeds speeds = calculateMecanumWheelSpeeds((float)Vx, (float)Vy, (float)omega);
-/* ------------------调试用------------------*/
-	     char info[100]="Pace:";
+		 speeds = calculateMecanumWheelSpeeds((float)Vx, (float)Vy, (float)omega);
+         /* ------------------调试用------------------*/
 	        // 利用 sprintf 将结果附加到 info 数组后面
+	     	 char info[100]="Target:";
 	        sprintf(info + strlen(info), " FL: %.2f", speeds.wheel_FL);
 	        sprintf(info + strlen(info), " FR: %.2f", speeds.wheel_FR);
 	        sprintf(info + strlen(info), " RL: %.2f", speeds.wheel_RL);
 	        sprintf(info + strlen(info), " RR: %.2f\n", speeds.wheel_RR);
+	        HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
 
-	     HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
-	     //操作电机
-	     //待补全
 	     Speedupdateflag = 0;
 	 }
     /* USER CODE END WHILE */
@@ -224,6 +263,22 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
     c_right_front_Speed = CalculatePulse(encoderPulse[1]);
     c_left_behind_Speed = CalculatePulse(encoderPulse[2]);
     c_right_behind_Speed = CalculatePulse(encoderPulse[3]);
+
+    /*-----------------仅调试----------------*/
+    // 利用 sprintf 将结果附加到 info 数组后面
+ 	 char info[100]="Pace:";
+    sprintf(info + strlen(info), " FL: %.2f", c_left_front_Speed);
+    sprintf(info + strlen(info), " FR: %.2f", c_right_front_Speed);
+    sprintf(info + strlen(info), " RL: %.2f", c_left_behind_Speed);
+    sprintf(info + strlen(info), " RR: %.2f\n", c_right_behind_Speed);
+    HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
+    /*-----------------仅调试----------------*/
+
+    PID_Cal(speeds.wheel_FL,c_left_front_Speed,&pid.wheel_FL);
+    PID_Cal(speeds.wheel_FR, c_right_front_Speed,&pid.wheel_FR);
+    PID_Cal(speeds.wheel_RL,c_left_behind_Speed,&pid.wheel_RL);
+    PID_Cal(speeds.wheel_RR,c_right_behind_Speed,&pid.wheel_RR);
+    MotorRun(pid.wheel_FL.pwm_add,pid.wheel_FR.pwm_add,pid.wheel_RL.pwm_add,pid.wheel_RR.pwm_add);
   }
 }
 

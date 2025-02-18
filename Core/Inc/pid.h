@@ -28,6 +28,14 @@ typedef struct
     int pwm_add; // 输出的 PWM 值
 } PID;
 
+typedef struct
+{
+    PID wheel_FL; // 左前轮 PID 控制器
+    PID wheel_FR; // 右前轮 PID 控制器
+    PID wheel_RL; // 左后轮 PID 控制器
+    PID wheel_RR; // 右后轮 PID 控制器
+} PID_x4;
+
 void PID_Init(PID *p);
 void PID_Cal(int targetSpeed,int currentSpeed,PID *p);
 
