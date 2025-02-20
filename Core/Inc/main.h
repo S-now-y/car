@@ -71,10 +71,6 @@ void Error_Handler(void);
 #define motor2a_GPIO_Port GPIOE
 #define motor2b_Pin GPIO_PIN_14
 #define motor2b_GPIO_Port GPIOE
-#define motor4a_Pin GPIO_PIN_8
-#define motor4a_GPIO_Port GPIOB
-#define motor4b_Pin GPIO_PIN_9
-#define motor4b_GPIO_Port GPIOB
 #define key1_Pin GPIO_PIN_0
 #define key1_GPIO_Port GPIOE
 #define key2_Pin GPIO_PIN_1

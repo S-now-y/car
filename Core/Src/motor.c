@@ -67,8 +67,8 @@ void Motor2_Forward(uint8_t speed)
 }
 void Motor3_Forward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,speed);
-	__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,0);
+	__HAL_TIM_SET_COMPARE(&htim10,TIM_CHANNEL_1,speed);
+	__HAL_TIM_SET_COMPARE(&htim11,TIM_CHANNEL_1,0);
 }
 void Motor4_Forward(uint8_t speed)
 {
@@ -92,8 +92,8 @@ void Motor2_Backward(uint8_t speed)
 }
 void Motor3_Backward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_4,speed);
-	__HAL_TIM_SET_COMPARE(&htim4,TIM_CHANNEL_3,0);
+	__HAL_TIM_SET_COMPARE(&htim10,TIM_CHANNEL_1,speed);
+	__HAL_TIM_SET_COMPARE(&htim11,TIM_CHANNEL_1,0);
 }
 void Motor4_Backward(uint8_t speed)
 {

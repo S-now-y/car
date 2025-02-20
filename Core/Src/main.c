@@ -45,15 +45,15 @@
 
 /* Private macro -------------------------------------------------------------*/
 /* USER CODE BEGIN PM */
-	short encoderPulse[4] = {0};
+//volatile short encoderPulse[4] = {0};
 /* USER CODE END PM */
 
 /* Private variables ---------------------------------------------------------*/
 
 /* USER CODE BEGIN PV */
 	uint8_t CMD[8] = {'0','0','0','0','0','0','0','0',};
-	volatile short Vx, Vy, omega;
-	volatile bool Speedupdateflag = 0;
+	volatile int Vx, Vy, omega;
+	volatile bool Speedupdateflag = 0, Pidupdateflag = 0;
 	PID_x4 pid;
 	WheelSpeeds speeds;
 /* USER CODE END PV */
@@ -158,16 +158,26 @@ int main(void)
   MX_TIM6_Init();
   MX_USART1_UART_Init();
   MX_USART3_UART_Init();
+  MX_TIM10_Init();
+  MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   Motor_Init();
   PID_Init(&pid);
   HAL_UART_Receive_IT(&huart1, CMD, 8);
+//  HAL_TIM_Base_Start(&htim4);
+//  HAL_TIM_Base_Start(&htim1);
+  HAL_TIM_Base_Start_IT(&htim6);
+  HAL_TIM_Encoder_Start(&htim2, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
+  HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
   /* USER CODE END 2 */
 
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
   while (1)
   {
+	 Motor4_Backward(100);
 	 // 调用函数计算每个轮子速度
 	 if(Speedupdateflag == 1){
 		 //-------------目前使用short值的输入数据，需统一-------------------
@@ -175,13 +185,37 @@ int main(void)
          /* ------------------调试用------------------*/
 	        // 利用 sprintf 将结果附加到 info 数组后面
 	     	 char info[100]="Target:";
-	        sprintf(info + strlen(info), " FL: %.2f", speeds.wheel_FL);
-	        sprintf(info + strlen(info), " FR: %.2f", speeds.wheel_FR);
-	        sprintf(info + strlen(info), " RL: %.2f", speeds.wheel_RL);
-	        sprintf(info + strlen(info), " RR: %.2f\n", speeds.wheel_RR);
+	        sprintf(info + strlen(info), " FL: %d", speeds.wheel_FL);
+	        sprintf(info + strlen(info), " FR: %d", speeds.wheel_FR);
+	        sprintf(info + strlen(info), " RL: %d", speeds.wheel_RL);
+	        sprintf(info + strlen(info), " RR: %d\n", speeds.wheel_RR);
 	        HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
 
 	     Speedupdateflag = 0;
+	 }
+	 if(Pidupdateflag == 1){
+		 	 int c_left_front_Speed,c_right_front_Speed,c_left_behind_Speed,c_right_behind_Speed;
+		    c_left_front_Speed = CalculatePulse(GetEncoderPulse0());
+		    c_right_front_Speed = CalculatePulse(GetEncoderPulse1());
+		    c_left_behind_Speed = CalculatePulse(GetEncoderPulse2());
+		    c_right_behind_Speed = CalculatePulse(GetEncoderPulse3());
+
+		    /*-----------------仅调试----------------*/
+		    // 利用 sprintf 将结果附加到 info 数组后面
+		 	 char info[100]="Pace:";
+		    sprintf(info + strlen(info), " FL: %d", c_left_front_Speed);
+		    sprintf(info + strlen(info), " FR: %d", c_right_front_Speed);
+		    sprintf(info + strlen(info), " RL: %d", c_left_behind_Speed);
+		    sprintf(info + strlen(info), " RR: %d\n", c_right_behind_Speed);
+		    HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
+		    /*-----------------仅调试----------------*/
+
+		    PID_Cal(speeds.wheel_FL,c_left_front_Speed,&pid.wheel_FL);
+		    PID_Cal(speeds.wheel_FR,c_right_front_Speed,&pid.wheel_FR);
+		    PID_Cal(speeds.wheel_RL,c_left_behind_Speed,&pid.wheel_RL);
+		    PID_Cal(13/*speeds.wheel_RR*/,c_right_behind_Speed,&pid.wheel_RR);
+		    //MotorRun(pid.wheel_FL.pwm_add,pid.wheel_FR.pwm_add,pid.wheel_RL.pwm_add,pid.wheel_RR.pwm_add);
+		    Pidupdateflag == 0;
 	 }
     /* USER CODE END WHILE */
 
@@ -207,11 +241,12 @@ void SystemClock_Config(void)
   /** Initializes the RCC Oscillators according to the specified parameters
   * in the RCC_OscInitTypeDef structure.
   */
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSE;
-  RCC_OscInitStruct.HSEState = RCC_HSE_ON;
+  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI;
+  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
+  RCC_OscInitStruct.HSICalibrationValue = RCC_HSICALIBRATION_DEFAULT;
   RCC_OscInitStruct.PLL.PLLState = RCC_PLL_ON;
-  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSE;
-  RCC_OscInitStruct.PLL.PLLM = 4;
+  RCC_OscInitStruct.PLL.PLLSource = RCC_PLLSOURCE_HSI;
+  RCC_OscInitStruct.PLL.PLLM = 8;
   RCC_OscInitStruct.PLL.PLLN = 168;
   RCC_OscInitStruct.PLL.PLLP = RCC_PLLP_DIV2;
   RCC_OscInitStruct.PLL.PLLQ = 4;
@@ -255,30 +290,9 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 //此处添加了定时器六更新中断回调函数
 void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
-  float c_left_front_Speed,c_right_front_Speed,c_left_behind_Speed,c_right_behind_Speed;
-  if(htim==(&htim6))
+  if(htim == (&htim6) && Pidupdateflag == 0)
   {
-    GetEncoderPulse();
-    c_left_front_Speed = CalculatePulse(encoderPulse[0]);
-    c_right_front_Speed = CalculatePulse(encoderPulse[1]);
-    c_left_behind_Speed = CalculatePulse(encoderPulse[2]);
-    c_right_behind_Speed = CalculatePulse(encoderPulse[3]);
-
-    /*-----------------仅调试----------------*/
-    // 利用 sprintf 将结果附加到 info 数组后面
- 	 char info[100]="Pace:";
-    sprintf(info + strlen(info), " FL: %.2f", c_left_front_Speed);
-    sprintf(info + strlen(info), " FR: %.2f", c_right_front_Speed);
-    sprintf(info + strlen(info), " RL: %.2f", c_left_behind_Speed);
-    sprintf(info + strlen(info), " RR: %.2f\n", c_right_behind_Speed);
-    HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
-    /*-----------------仅调试----------------*/
-
-    PID_Cal((int)speeds.wheel_FL,c_left_front_Speed,&pid.wheel_FL);
-    PID_Cal((int)speeds.wheel_FR, c_right_front_Speed,&pid.wheel_FR);
-    PID_Cal((int)speeds.wheel_RL,c_left_behind_Speed,&pid.wheel_RL);
-    PID_Cal((int)speeds.wheel_RR,c_right_behind_Speed,&pid.wheel_RR);
-    //MotorRun(pid.wheel_FL.pwm_add,pid.wheel_FR.pwm_add,pid.wheel_RL.pwm_add,pid.wheel_RR.pwm_add);
+	  Pidupdateflag = 1;
   }
 }
 

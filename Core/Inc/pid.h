@@ -11,7 +11,9 @@
 #define VELOCITY_KP 1.0f
 #define VELOCITY_KI 0.5f
 #define VELOCITY_KD 0.1f
-#define LIMIT_VALUE 100
+//#define LIMIT_VALUE 100
+#define MIN_LIMIT -100
+#define MAX_LIMIT 100
 
 #include "encoder.h"
 // 定义 PID 结构体
@@ -24,7 +26,7 @@ typedef struct
     float last_error;  // 上一次偏差
     float prev_error;  // 上上次偏差
 
-    int limit;   // 限制输出幅值
+//    int limit;   // 限制输出幅值
     int pwm_add; // 输出的 PWM 值
 } PID;
 
