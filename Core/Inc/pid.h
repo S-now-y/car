@@ -5,40 +5,52 @@
  *      Author: 22684
  */
 
-#ifndef INC_PID_H_
-#define INC_PID_H_
+#ifndef INC_PID_H
+#define INC_PID_H
 
-#define VELOCITY_KP 1.0f
-#define VELOCITY_KI 0.5f
-#define VELOCITY_KD 0.1f
-//#define LIMIT_VALUE 100
-#define MIN_LIMIT -100
-#define MAX_LIMIT 100
+// PID tuning constants defined as macros.
+#define PID_KP      1.0f
+#define PID_KI      0.1f
+#define PID_KD      0.01f
+
+// Output limits
+#define PID_MAX_OUTPUT   100
+#define PID_MIN_OUTPUT  -100
 
 #include "encoder.h"
+
 // 定义 PID 结构体
-typedef struct
-{
-    float Kp;
-    float Ki;
-    float Kd;
-
-    float last_error;  // 上一次偏差
-    float prev_error;  // 上上次偏差
-
-//    int limit;   // 限制输出幅值
-    int pwm_add; // 输出的 PWM 值
+typedef struct {
+    float last_error;
+    float integral;
+    float output;
 } PID;
 
-typedef struct
-{
-    PID wheel_FL; // 左前轮 PID 控制器
-    PID wheel_FR; // 右前轮 PID 控制器
-    PID wheel_RL; // 左后轮 PID 控制器
-    PID wheel_RR; // 右后轮 PID 控制器
+typedef struct {
+    PID wheel_FL;
+    PID wheel_FR;
+    PID wheel_RL;
+    PID wheel_RR;
 } PID_x4;
 
-void PID_Init(PID *p);
-void PID_Cal(int targetSpeed,int currentSpeed,PID *p);
+/**
+ * @brief  重置/初始化单一路 PID 控制器
+ * @param  pid: 指向 PID 结构体的指针
+ */
+void PID_Init(PID *pid);
 
-#endif /* INC_PID_H_ */
+/**
+ * @brief  同时初始化四路 PID 控制器
+ * @param  pid: 指向 PID_x4 结构体的指针
+ */
+void PID_Init_x4(PID_x4 *pid);
+
+/**
+ * @brief  使用新测量值更新 PID 控制器
+ * @param  pid: 指向 PID 结构体的指针
+ * @param  setpoint: 目标值
+ * @param  measured: 实际测量值
+ */
+void PID_Update(PID *pid, float setpoint, float measured);
+
+#endif // INC_PID_H

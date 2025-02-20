@@ -35,13 +35,13 @@ int GetEncoderPulse1()
 	__HAL_TIM_SET_COUNTER(&htim3,10000);
 	    return encoderPulse;
 }
-int GetEncoderPulse2()
+int GetEncoderPulse3()
 {
 	int encoderPulse = __HAL_TIM_GET_COUNTER(&htim4);
 	__HAL_TIM_SET_COUNTER(&htim4,10000);   //计数值重新清零
 	    return encoderPulse;
 }
-int GetEncoderPulse3()
+int GetEncoderPulse2()
 {
 	int encoderPulse= __HAL_TIM_GET_COUNTER(&htim5);
 	__HAL_TIM_SET_COUNTER(&htim5,10000);
@@ -51,5 +51,5 @@ int GetEncoderPulse3()
 //速度计算，里面的值该速度为每个麦克纳姆轮的转速，并非小车实际的运行速度，车轮周长*规定时间内得到的脉冲数/(电机转动一圈的脉冲数*定时器规定时间 )
 float CalculatePulse(int pulse)
 {
-	return (float)(1.00 * (pulse-10000));
+	return (float)(-1.00 * (pulse-10000));
 }

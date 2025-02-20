@@ -162,7 +162,7 @@ int main(void)
   MX_TIM11_Init();
   /* USER CODE BEGIN 2 */
   Motor_Init();
-  PID_Init(&pid);
+  PID_Init_x4(&pid);
   HAL_UART_Receive_IT(&huart1, CMD, 8);
 //  HAL_TIM_Base_Start(&htim4);
 //  HAL_TIM_Base_Start(&htim1);
@@ -177,7 +177,7 @@ int main(void)
   /* USER CODE BEGIN WHILE */
   while (1)
   {
-	 Motor4_Backward(100);
+	 //Motor4_Backward(100);
 	 // 调用函数计算每个轮子速度
 	 if(Speedupdateflag == 1){
 		 //-------------目前使用short值的输入数据，需统一-------------------
@@ -193,29 +193,33 @@ int main(void)
 
 	     Speedupdateflag = 0;
 	 }
-	 if(Pidupdateflag == 1){
-		 	 int c_left_front_Speed,c_right_front_Speed,c_left_behind_Speed,c_right_behind_Speed;
-		    c_left_front_Speed = CalculatePulse(GetEncoderPulse0());
-		    c_right_front_Speed = CalculatePulse(GetEncoderPulse1());
-		    c_left_behind_Speed = CalculatePulse(GetEncoderPulse2());
-		    c_right_behind_Speed = CalculatePulse(GetEncoderPulse3());
+	 if (Pidupdateflag == 1) {
+	     int c_left_front_Speed, c_right_front_Speed, c_left_behind_Speed, c_right_behind_Speed;
+	     c_left_front_Speed = CalculatePulse(GetEncoderPulse0());
+	     c_right_front_Speed = CalculatePulse(GetEncoderPulse1());
+	     c_left_behind_Speed = CalculatePulse(GetEncoderPulse2());
+	     c_right_behind_Speed = CalculatePulse(GetEncoderPulse3());
+	     
+	     // 调试输出当前脉冲数据
+	     char info[100] = "Pace:";
+	     sprintf(info + strlen(info), " FL: %d", c_left_front_Speed);
+	     sprintf(info + strlen(info), " FR: %d", c_right_front_Speed);
+	     sprintf(info + strlen(info), " RL: %d", c_left_behind_Speed);
+	     sprintf(info + strlen(info), " RR: %d\n", c_right_behind_Speed);
+	     HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
+	     
+	     // 使用新写的 PID 算法，使用目标速度（speeds）和当前速度（编码器测量值）
+	     //speeds.wheel_RR=100;
+	     PID_Update(&pid.wheel_FL, (float)speeds.wheel_FL, (float)c_left_front_Speed);
+	     PID_Update(&pid.wheel_FR, (float)speeds.wheel_FR, (float)c_right_front_Speed);
+	     PID_Update(&pid.wheel_RL, (float)speeds.wheel_RL, (float)c_left_behind_Speed);
+	     PID_Update(&pid.wheel_RR, (float)speeds.wheel_RR, (float)c_right_behind_Speed);
 
-		    /*-----------------仅调试----------------*/
-		    // 利用 sprintf 将结果附加到 info 数组后面
-		 	 char info[100]="Pace:";
-		    sprintf(info + strlen(info), " FL: %d", c_left_front_Speed);
-		    sprintf(info + strlen(info), " FR: %d", c_right_front_Speed);
-		    sprintf(info + strlen(info), " RL: %d", c_left_behind_Speed);
-		    sprintf(info + strlen(info), " RR: %d\n", c_right_behind_Speed);
-		    HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
-		    /*-----------------仅调试----------------*/
-
-		    PID_Cal(speeds.wheel_FL,c_left_front_Speed,&pid.wheel_FL);
-		    PID_Cal(speeds.wheel_FR,c_right_front_Speed,&pid.wheel_FR);
-		    PID_Cal(speeds.wheel_RL,c_left_behind_Speed,&pid.wheel_RL);
-		    PID_Cal(13/*speeds.wheel_RR*/,c_right_behind_Speed,&pid.wheel_RR);
-		    //MotorRun(pid.wheel_FL.pwm_add,pid.wheel_FR.pwm_add,pid.wheel_RL.pwm_add,pid.wheel_RR.pwm_add);
-		    Pidupdateflag == 0;
+	     // 根据计算的输出值驱动电机
+	     MotorRun((int)pid.wheel_FL.output, (int)pid.wheel_FR.output,
+	              (int)pid.wheel_RL.output, (int)pid.wheel_RR.output);
+	     
+	     Pidupdateflag = 0;
 	 }
     /* USER CODE END WHILE */
 

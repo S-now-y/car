@@ -6,29 +6,43 @@
  */
 #include "pid.h"
 
-
-
-void PID_Init(PID *p)
-{
-    p->Kp = VELOCITY_KP;
-    p->Ki = VELOCITY_KI;
-    p->Kd = VELOCITY_KD;
-    p->last_error = 0;
-    p->prev_error = 0;
-    //p->limit = LIMIT_VALUE;
-    p->pwm_add = 0;
+void PID_Init(PID *pid) {
+    pid->last_error = 0.0f;
+    pid->integral = 0.0f;
+    pid->output = 0.0f;
 }
-/**
- * @brief  PID相关参数的初始化
- * @param  PID的结构体指针
- */
-void PID_Cal(int targetSpeed, int currentSpeed, PID *p) {
-    int error = targetSpeed - currentSpeed; // 得到目标速度与当前速度的误差
-    p->pwm_add += p->Kp * (error - p->last_error) + p->Ki * error + p->Kd * (error - 2 * p->last_error + p->prev_error); // 根据增量PID公式计算得到输出的增量
 
-    p->prev_error = p->last_error; // 记录上次误差
-    p->last_error = error; // 记录本次误差
-
-    if (p->pwm_add > MAX_LIMIT) p->pwm_add = MAX_LIMIT; // 限制最大输出值
-    if (p->pwm_add < MIN_LIMIT) p->pwm_add = MIN_LIMIT; // 限制最小输出值
+void PID_Init_x4(PID_x4 *pid) {
+    PID_Init(&pid->wheel_FL);
+    PID_Init(&pid->wheel_FR);
+    PID_Init(&pid->wheel_RL);
+    PID_Init(&pid->wheel_RR);
 }
+
+void PID_Update(PID *pid, float setpoint, float measured) {
+    float error = setpoint - measured;
+    
+    // Proportional term
+    float P_out = PID_KP * error;
+    
+    // Integral term
+    pid->integral += error;
+    float I_out = PID_KI * pid->integral;
+    
+    // Derivative term
+    float derivative = error - pid->last_error;
+    float D_out = PID_KD * derivative;
+    
+    // PID output before clamping
+    pid->output = P_out + I_out + D_out;
+    
+    // 记录当前误差，用于下次计算Derivative term
+    pid->last_error = error;
+    
+    // Clamp output to max/min limits
+    if (pid->output > PID_MAX_OUTPUT)
+        pid->output = PID_MAX_OUTPUT;
+    else if (pid->output < PID_MIN_OUTPUT)
+        pid->output = PID_MIN_OUTPUT;
+}
+
