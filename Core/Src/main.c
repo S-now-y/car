@@ -171,6 +171,8 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim3, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim4, TIM_CHANNEL_ALL);
   HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
+
+  HAL_UART_Transmit(&huart1, (uint8_t*)"Reseted", 7, 50);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -194,30 +196,31 @@ int main(void)
 	     Speedupdateflag = 0;
 	 }
 	 if (Pidupdateflag == 1) {
-	     int c_left_front_Speed, c_right_front_Speed, c_left_behind_Speed, c_right_behind_Speed;
-	     c_left_front_Speed = CalculatePulse(GetEncoderPulse0());
-	     c_right_front_Speed = CalculatePulse(GetEncoderPulse1());
-	     c_left_behind_Speed = CalculatePulse(GetEncoderPulse2());
+	     float c_left_front_Speed, c_right_front_Speed, c_left_behind_Speed, c_right_behind_Speed;
+	     c_left_front_Speed =  -CalculatePulse(GetEncoderPulse0());
+	     c_right_front_Speed = CalculatePulse(GetEncoderPulse2());
+	     c_left_behind_Speed = -CalculatePulse(GetEncoderPulse1());
 	     c_right_behind_Speed = CalculatePulse(GetEncoderPulse3());
 	     
 	     // 调试输出当前脉冲数据
 	     char info[100] = "Pace:";
-	     sprintf(info + strlen(info), " FL: %d", c_left_front_Speed);
-	     sprintf(info + strlen(info), " FR: %d", c_right_front_Speed);
-	     sprintf(info + strlen(info), " RL: %d", c_left_behind_Speed);
-	     sprintf(info + strlen(info), " RR: %d\n", c_right_behind_Speed);
+	     sprintf(info + strlen(info), " FL: %6.2f", c_left_front_Speed);
+	     sprintf(info + strlen(info), " FR: %6.2f", c_right_front_Speed);
+	     sprintf(info + strlen(info), " RL: %6.2f", c_left_behind_Speed);
+	     sprintf(info + strlen(info), " RR: %6.2f\n", c_right_behind_Speed);
 	     HAL_UART_Transmit(&huart1, (uint8_t*)info, strlen(info), 50);
 	     
 	     // 使用新写的 PID 算法，使用目标速度（speeds）和当前速度（编码器测量值）
-	     //speeds.wheel_RR=100;
+	     //speeds.wheel_FL=0;
 	     PID_Update(&pid.wheel_FL, (float)speeds.wheel_FL, (float)c_left_front_Speed);
 	     PID_Update(&pid.wheel_FR, (float)speeds.wheel_FR, (float)c_right_front_Speed);
 	     PID_Update(&pid.wheel_RL, (float)speeds.wheel_RL, (float)c_left_behind_Speed);
 	     PID_Update(&pid.wheel_RR, (float)speeds.wheel_RR, (float)c_right_behind_Speed);
 
 	     // 根据计算的输出值驱动电机
-	     MotorRun((int)pid.wheel_FL.output, (int)pid.wheel_FR.output,
-	              (int)pid.wheel_RL.output, (int)pid.wheel_RR.output);
+	    //MotorRun((int)pid.wheel_FL.output, (int)pid.wheel_FR.output, (int)pid.wheel_RL.output, (int)pid.wheel_RR.output);
+
+		  // MotorRun(-100, 0, 80, 100);
 	     
 	     Pidupdateflag = 0;
 	 }
@@ -277,7 +280,7 @@ void SystemClock_Config(void)
 /* USER CODE BEGIN 4 */
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 	//可能需要检查是哪一个huart
-	if (CMD[0] == 'c' && CMD[7] == '\n') {
+	if (CMD[0] == 'c' && CMD[7] == 'c') {
 	    // 将字符转换为对应的数字值，并计算出最终的 Vx, Vy, omega
 	    Vx = (short)((CMD[1] - '0') * 10 + (CMD[2] - '0'));
 	    Vy = (short)((CMD[3] - '0') * 10 + (CMD[4] - '0'));
@@ -285,7 +288,7 @@ void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart){
 
 		Speedupdateflag = 1;
 	}
-	else if(CMD[0]=='f'&&CMD[1]=='f'&&CMD[2]=='f'){
+	else if(CMD[0]=='#'&&CMD[1]=='#'&&CMD[2]=='#'){
 			   __set_FAULTMASK(1);//禁止所有的可屏蔽中断
 			   NVIC_SystemReset();//软件复位
 	}

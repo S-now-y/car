@@ -9,9 +9,9 @@
 #define INC_PID_H
 
 // PID tuning constants defined as macros.
-#define PID_KP      1.0f
+#define PID_KP      5.0f
 #define PID_KI      0.1f
-#define PID_KD      0.01f
+#define PID_KD      0.5f
 
 // Output limits
 #define PID_MAX_OUTPUT   100
