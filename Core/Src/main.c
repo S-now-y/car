@@ -218,9 +218,9 @@ int main(void)
 	     PID_Update(&pid.wheel_RR, (float)speeds.wheel_RR, (float)c_right_behind_Speed);
 
 	     // 根据计算的输出值驱动电机
-	    //MotorRun((int)pid.wheel_FL.output, (int)pid.wheel_FR.output, (int)pid.wheel_RL.output, (int)pid.wheel_RR.output);
+	     MotorRun((int)pid.wheel_FL.output, (int)pid.wheel_FR.output, (int)pid.wheel_RL.output, (int)pid.wheel_RR.output);
 
-		  // MotorRun(-100, 0, 80, 100);
+		// MotorRun(-100, 0, 80, 100);
 	     
 	     Pidupdateflag = 0;
 	 }
