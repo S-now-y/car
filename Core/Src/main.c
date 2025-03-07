@@ -175,7 +175,7 @@ int main(void)
   HAL_TIM_Encoder_Start(&htim5, TIM_CHANNEL_ALL);
 
   HAL_UART_Transmit(&huart1, (uint8_t*)"Reseted", 7, 50);
-
+  HAL_Delay(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -184,10 +184,22 @@ int main(void)
   {
 	 //Motor4_Backward(100);
 	 // 调用函数计算每个轮子速度
+	  //Targetspeeds.wheel_FL=60;Targetspeeds.wheel_FR=60;Targetspeeds.wheel_RL=60;Targetspeeds.wheel_RR=60;
 	 if(Speedupdateflag == 1){
 		 //-------------目前使用short值的输入数据，需统一-------------------
 		 Targetspeeds = calculateMecanumWheelSpeeds((float)Vx, (float)Vy, (float)omega);
 	     Speedupdateflag = 0;
+	 }
+	 if(1){
+		 //-------------演示模式-------------------
+		 if(__HAL_TIM_GET_COUNTER(&htim7)<=10000)
+		 Targetspeeds = calculateMecanumWheelSpeeds(60, 0, 0);
+		 else if(__HAL_TIM_GET_COUNTER(&htim7)<=20000)
+		 Targetspeeds = calculateMecanumWheelSpeeds(0, 60, 0);
+		 else if(__HAL_TIM_GET_COUNTER(&htim7)<=30000)
+		 Targetspeeds = calculateMecanumWheelSpeeds(-60, 0, 0);
+		 else
+		 Targetspeeds = calculateMecanumWheelSpeeds(0, -60, 0);
 	 }
 	 if (Pidupdateflag == 1) {
 	     
@@ -221,7 +233,7 @@ int main(void)
 	     sprintf(info1 + strlen(info1), " FR: %6.2f", Currentspeeds.wheel_FR);
 	     sprintf(info1 + strlen(info1), " RL: %6.2f", Currentspeeds.wheel_RL);
 	     sprintf(info1 + strlen(info1), " RR: %6.2f\n", Currentspeeds.wheel_RR);
-	     HAL_UART_Transmit(&huart1, (uint8_t*)info1, strlen(info1), 50);
+	     HAL_UART_Transmit(&huart1, (uint8_t*)info1, strlen(info1), 100);
 	     debug = 0;
 	 }
     /* USER CODE END WHILE */
@@ -298,15 +310,16 @@ void HAL_TIM_PeriodElapsedCallback(TIM_HandleTypeDef *htim)
 {
   if(htim == (&htim6) && Pidupdateflag == 0)
   {
-		 Currentspeeds.wheel_FL =  -CalculatePulse(GetEncoderPulse0());
-		 Currentspeeds.wheel_FR = CalculatePulse(GetEncoderPulse2());
-		 Currentspeeds.wheel_RL = -CalculatePulse(GetEncoderPulse1());
-		 Currentspeeds.wheel_RR = CalculatePulse(GetEncoderPulse3());
+		 Currentspeeds.wheel_FL = CalculatePulse(GetEncoderPulse0());
+		 Currentspeeds.wheel_FR = -CalculatePulse(GetEncoderPulse2());
+		 Currentspeeds.wheel_RL = CalculatePulse(GetEncoderPulse1());
+		 Currentspeeds.wheel_RR = -CalculatePulse(GetEncoderPulse3());
 	  Pidupdateflag = 1;
   }
   else if(htim == (&htim7))
   {
 	  debug = 1;
+
   }
 }
 

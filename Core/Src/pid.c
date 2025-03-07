@@ -21,24 +21,31 @@ void PID_Init_x4(PID_x4 *pid) {
 
 void PID_Update(PID *pid, float setpoint, float measured) {
     float error = setpoint - measured;
-    
+
     // Proportional term
     float P_out = PID_KP * error;
-    
+
     // Integral term
     pid->integral += error;
+
+    // 防积分饱和
+    if (pid->integral > PID_MAX_INTEGRAL)
+        pid->integral = PID_MAX_INTEGRAL;
+    else if (pid->integral < PID_MIN_INTEGRAL)
+        pid->integral = PID_MIN_INTEGRAL;
+
     float I_out = PID_KI * pid->integral;
-    
+
     // Derivative term
     float derivative = error - pid->last_error;
     float D_out = PID_KD * derivative;
-    
+
     // PID output before clamping
     pid->output = P_out + I_out + D_out;
-    
+
     // 记录当前误差，用于下次计算Derivative term
     pid->last_error = error;
-    
+
     // Clamp output to max/min limits
     if (pid->output > PID_MAX_OUTPUT)
         pid->output = PID_MAX_OUTPUT;

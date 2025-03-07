@@ -51,46 +51,43 @@ void Motor_Stop(void)
 //}
 
 //电机正反转，暂定左前右前左后右后1234
-void Motor1_Forward(uint8_t speed)
+void Motor1_Backward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_1,0);
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_2,speed);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, speed);
 }
-void Motor2_Forward(uint8_t speed)
+void Motor2_Backward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_3,speed);
-	__HAL_TIM_SET_COMPARE(&htim1,TIM_CHANNEL_4,0);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, speed);
+    __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, 0);
 }
-void Motor3_Forward(uint8_t speed)
+void Motor3_Backward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim10,TIM_CHANNEL_1,0);
-	__HAL_TIM_SET_COMPARE(&htim11,TIM_CHANNEL_1,speed);
+    __HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, speed);
 }
-void Motor4_Forward(uint8_t speed)
+void Motor4_Backward(uint8_t speed)
 {
-	__HAL_TIM_SET_COMPARE(&htim9,TIM_CHANNEL_1,0);
-	__HAL_TIM_SET_COMPARE(&htim9,TIM_CHANNEL_2,speed);
+    __HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_1, 0);
+    __HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_2, speed);
 }
 
-void Motor1_Backward(uint8_t speed)
+void Motor1_Forward(uint8_t speed)
 {
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_1, speed);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_2, 0);
 }
-
-void Motor2_Backward(uint8_t speed)
+void Motor2_Forward(uint8_t speed)
 {
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_3, 0);
     __HAL_TIM_SET_COMPARE(&htim1, TIM_CHANNEL_4, speed);
 }
-
-void Motor3_Backward(uint8_t speed)
+void Motor3_Forward(uint8_t speed)
 {
     __HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, speed);
     __HAL_TIM_SET_COMPARE(&htim11, TIM_CHANNEL_1, 0);
 }
-
-void Motor4_Backward(uint8_t speed)
+void Motor4_Forward(uint8_t speed)
 {
     __HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_1, speed);
     __HAL_TIM_SET_COMPARE(&htim9, TIM_CHANNEL_2, 0);

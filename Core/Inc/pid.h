@@ -9,10 +9,12 @@
 #define INC_PID_H
 
 // PID tuning constants defined as macros.
-#define PID_KP      3.21f
-#define PID_KI      0.0044f
-#define PID_KD      0.01f
-
+#define PID_KP      3.2f
+#define PID_KI      0.0000008f
+#define PID_KD      1.0f
+//(设定值范围 * 时间常数) / PID_KI;
+#define PID_MAX_INTEGRAL (200*1/0.2)
+#define PID_MIN_INTEGRAL (-PID_MAX_INTEGRAL)
 // Output limits
 #define PID_MAX_OUTPUT   100
 #define PID_MIN_OUTPUT  -100
